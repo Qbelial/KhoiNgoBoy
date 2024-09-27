@@ -1,0 +1,118 @@
+local G2L = {}
+G2L["1"] = Instance.new("ScreenGui", game.Players.LocalPlayer:WaitForChild("PlayerGui"))
+G2L["1"].ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+local buttonSize = UDim2.new(0.265, 0, 0.08, 0)
+
+local function createUIElement(className, parent, properties)
+    local element = Instance.new(className, parent)
+    for prop, value in pairs(properties) do element[prop] = value end
+    return element
+end
+
+G2L["7"] = createUIElement("TextBox", G2L["1"], {
+    TextColor3 = Color3.fromRGB(255, 255, 255),
+    TextSize = 12,
+    BackgroundColor3 = Color3.fromRGB(30, 30, 30),
+    BackgroundTransparency = 0.5,
+    Size = buttonSize,
+    Position = UDim2.new(0.5, 0, 0.740, 0),
+    AnchorPoint = Vector2.new(0.5, 0.5),
+    PlaceholderText = "TP / Name?",
+    Text = "",
+    BorderSizePixel = 0
+})
+
+G2L["nameInput"] = createUIElement("TextBox", G2L["1"], {
+    TextColor3 = Color3.fromRGB(255, 255, 255),
+    TextSize = 12,
+    BackgroundColor3 = Color3.fromRGB(30, 30, 30),
+    BackgroundTransparency = 0.5,
+    Size = buttonSize,
+    Position = UDim2.new(0.5, 0, 0.645, 0),
+    AnchorPoint = Vector2.new(0.5, 0.5),
+    PlaceholderText = "TP Chain / Name?",
+    Text = "",
+    BorderSizePixel = 0
+})
+
+G2L["toggleButton"] = createUIElement("TextButton", G2L["1"], {
+    Text = "Start Teleport",
+    TextColor3 = Color3.fromRGB(255, 255, 255),
+    TextSize = 12,
+    BackgroundColor3 = Color3.fromRGB(30, 30, 30),
+    BackgroundTransparency = 0.5,
+    Size = buttonSize,
+    Position = UDim2.new(0.5, 0, 0.550, 0),
+    AnchorPoint = Vector2.new(0.5, 0.5),
+    BorderSizePixel = 0
+})
+
+local toggleVisibilityButton = createUIElement("TextButton", G2L["1"], {
+    Text = "+",
+    TextColor3 = Color3.fromRGB(255, 255, 255),
+    TextSize = 20,
+    BackgroundColor3 = Color3.fromRGB(30, 30, 30),
+    BackgroundTransparency = 0.5,
+    Size = UDim2.new(0.05, 0, 0.08, 0),
+    Position = UDim2.new(0.665, 0, 0.740, 0),
+    AnchorPoint = Vector2.new(0.5, 0.5),
+    BorderSizePixel = 0
+})
+
+local elementsVisible = true
+local isTeleporting, teleportConnection, originalPosition = false, nil, nil
+
+local function toggleElementsVisibility()
+    elementsVisible = not elementsVisible
+    G2L["toggleButton"].Visible = elementsVisible
+    G2L["nameInput"].Visible = elementsVisible
+end
+
+local function findPlayer(name)
+    name = name:lower()
+    for _, player in ipairs(game.Players:GetPlayers()) do
+        if player.Name:lower():sub(1, #name) == name or player.DisplayName:lower():sub(1, #name) == name then
+            return player
+        end
+    end
+end
+
+local function teleportToPlayer(name)
+    local targetPlayer = findPlayer(name)
+    if targetPlayer and targetPlayer.Character and game.Players.LocalPlayer.Character then
+        local playerChar = game.Players.LocalPlayer.Character
+        local targetPos = targetPlayer.Character.PrimaryPart.Position
+        local backPos = targetPos - (targetPlayer.Character.PrimaryPart.CFrame.LookVector * 2.5)
+        playerChar:SetPrimaryPartCFrame(CFrame.new(backPos, targetPos))
+    end
+end
+
+G2L["7"].FocusLost:Connect(function() teleportToPlayer(G2L["7"].Text) end)
+
+G2L["toggleButton"].MouseButton1Click:Connect(function()
+    local targetName = G2L["nameInput"].Text
+    if targetName and targetName ~= "" then
+        isTeleporting = not isTeleporting
+        G2L["toggleButton"].Text = isTeleporting and "Stop Teleport" or "Start Teleport"
+        if isTeleporting then
+            originalPosition = game.Players.LocalPlayer.Character.PrimaryPart.Position
+            teleportConnection = game:GetService("RunService").Heartbeat:Connect(function() teleportToPlayer(targetName) end)
+        else
+            if teleportConnection then teleportConnection:Disconnect() end
+            if game.Players.LocalPlayer.Character then
+                game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(originalPosition))
+            end
+        end
+    end
+end)
+
+game.Players.LocalPlayer.CharacterAdded:Connect(function()
+    if teleportConnection then teleportConnection:Disconnect() end
+    isTeleporting = false
+    G2L["toggleButton"].Text = "Start Teleport"
+end)
+
+toggleVisibilityButton.MouseButton1Click:Connect(toggleElementsVisibility)
+
+return G2L["1"]
