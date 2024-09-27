@@ -1,0 +1,43 @@
+-- TELEPORT V1
+
+local G2L = {}
+
+G2L["1"] = Instance.new("ScreenGui", game.Players.LocalPlayer:WaitForChild("PlayerGui"))
+G2L["1"].ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+G2L["7"] = Instance.new("TextBox", G2L["1"])
+G2L["7"].TextColor3 = Color3.fromRGB(255, 255, 255)
+G2L["7"].TextSize = 12
+G2L["7"].BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+G2L["7"].BackgroundTransparency = 0.5
+G2L["7"].Size = UDim2.new(0.265, 0, 0.08, 0)
+G2L["7"].Position = UDim2.new(0.5, 0, 0.740, 0)
+G2L["7"].AnchorPoint = Vector2.new(0.5, 0.5)
+G2L["7"].PlaceholderText = "name / abc"
+G2L["7"].Text = ""
+G2L["7"].BorderSizePixel = 0
+
+Instance.new("UICorner", G2L["7"]).CornerRadius = UDim.new(0, 20)
+
+local function findPlayer(name)
+    name = name:lower()
+    for _, player in ipairs(game.Players:GetPlayers()) do
+        if player.Name:lower():sub(1, #name) == name or player.DisplayName:lower():sub(1, #name) == name then
+            return player
+        end
+    end
+end
+
+local function teleportToPlayer(name)
+    local targetPlayer = findPlayer(name)
+    if targetPlayer and targetPlayer.Character and game.Players.LocalPlayer.Character then
+        local position = targetPlayer.Character.PrimaryPart.Position
+        game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(position))
+    end
+end
+
+G2L["7"].FocusLost:Connect(function()
+    teleportToPlayer(G2L["7"].Text)
+end)
+
+return G2L["1"], require
