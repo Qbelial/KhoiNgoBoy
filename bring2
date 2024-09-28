@@ -1,0 +1,117 @@
+-- BRING PLAYER 
+
+local localPlayer = game.Players.LocalPlayer
+local offsetDistance = 0
+local teleportEnabled = false
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "Teleport_GUI"
+ScreenGui.Parent = localPlayer.PlayerGui
+ScreenGui.ResetOnSpawn = false
+
+local buttonHeight = 25
+local buttonWidth = 180
+local transparencyValue = 0.7
+local buttonColor = Color3.fromRGB(30, 30, 30)
+
+local BackgroundFrame = Instance.new("Frame")
+BackgroundFrame.Size = UDim2.new(0, buttonWidth, 0, buttonHeight * 3)
+BackgroundFrame.Position = UDim2.new(0, 10, 0, 10)
+BackgroundFrame.BackgroundColor3 = buttonColor
+BackgroundFrame.BackgroundTransparency = transparencyValue
+BackgroundFrame.BorderSizePixel = 0
+BackgroundFrame.Parent = ScreenGui
+
+local DistanceInput = Instance.new("TextBox")
+DistanceInput.Size = UDim2.new(0, buttonWidth, 0, buttonHeight)
+DistanceInput.Position = UDim2.new(0, 0, 0, 0)
+DistanceInput.Text = ""
+DistanceInput.PlaceholderText = "Distance (studs)"
+DistanceInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+DistanceInput.BackgroundColor3 = buttonColor
+DistanceInput.BackgroundTransparency = transparencyValue
+DistanceInput.BorderSizePixel = 0
+DistanceInput.TextSize = 11
+DistanceInput.Parent = BackgroundFrame
+
+local PlayerNameInput = Instance.new("TextBox")
+PlayerNameInput.Size = UDim2.new(0, buttonWidth, 0, buttonHeight)
+PlayerNameInput.Position = UDim2.new(0, 0, 0, buttonHeight)
+PlayerNameInput.Text = ""
+PlayerNameInput.PlaceholderText = "BR / Name?"
+PlayerNameInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+PlayerNameInput.BackgroundColor3 = buttonColor
+PlayerNameInput.BackgroundTransparency = transparencyValue
+PlayerNameInput.BorderSizePixel = 0
+PlayerNameInput.TextSize = 11
+PlayerNameInput.Parent = BackgroundFrame
+
+local TeleportToggle = Instance.new("TextButton")
+TeleportToggle.Size = UDim2.new(0, buttonWidth, 0, buttonHeight)
+TeleportToggle.Position = UDim2.new(0, 0, 0, buttonHeight * 2)
+TeleportToggle.Text = "Start Bring Player"
+TeleportToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+TeleportToggle.BackgroundColor3 = buttonColor
+TeleportToggle.BackgroundTransparency = transparencyValue
+TeleportToggle.BorderSizePixel = 0
+TeleportToggle.TextSize = 11
+TeleportToggle.Parent = BackgroundFrame
+
+DistanceInput.FocusLost:Connect(function()
+    local newDistance = tonumber(DistanceInput.Text)
+    if newDistance and newDistance > 0 then
+        offsetDistance = newDistance
+    else
+        DistanceInput.Text = ""
+        print("Please enter a valid positive number.")
+    end
+end)
+
+local function findPlayerByNameOrDisplayName(name)
+    for _, player in pairs(game.Players:GetPlayers()) do
+        if string.lower(player.Name):sub(1, #name) == string.lower(name) or 
+           string.lower(player.DisplayName):sub(1, #name) == string.lower(name) then
+            return player
+        end
+    end
+    return nil
+end
+
+local function teleportToPlayer()
+    local localCharacter = localPlayer.Character
+    if not localCharacter or not localCharacter:FindFirstChild("HumanoidRootPart") then
+        return
+    end
+
+    local playerName = PlayerNameInput.Text
+    if string.lower(playerName) == "all" then
+        for _, player in pairs(game.Players:GetPlayers()) do
+            if player ~= localPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                local targetHumanoidRootPart = player.Character.HumanoidRootPart
+                local localCFrame = localCharacter.HumanoidRootPart.CFrame
+                local offsetPosition = localCFrame.Position + (localCFrame.LookVector * offsetDistance)
+
+                targetHumanoidRootPart.CFrame = CFrame.new(offsetPosition)
+            end
+        end
+    else
+        local targetPlayer = findPlayerByNameOrDisplayName(playerName)
+        if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            local targetHumanoidRootPart = targetPlayer.Character.HumanoidRootPart
+            local localCFrame = localCharacter.HumanoidRootPart.CFrame
+            local offsetPosition = localCFrame.Position + (localCFrame.LookVector * offsetDistance)
+
+            targetHumanoidRootPart.CFrame = CFrame.new(offsetPosition)
+        end
+    end
+end
+
+TeleportToggle.MouseButton1Click:Connect(function()
+    teleportEnabled = not teleportEnabled
+    TeleportToggle.Text = teleportEnabled and "Stop Bring Player" or "Start Bring Player"
+
+    while teleportEnabled do
+        teleportToPlayer()
+        wait()
+    end
+end)
