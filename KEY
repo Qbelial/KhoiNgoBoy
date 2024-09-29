@@ -1,0 +1,55 @@
+local player = game.Players.LocalPlayer
+local screenGui = Instance.new("ScreenGui", game.CoreGui)
+local button = Instance.new("TextButton", screenGui)
+
+button.Size = UDim2.new(0, 70, 0, 25)
+button.Position = UDim2.new(0, 10, 1, -35)
+button.Text = "EXEC INVIS"
+button.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+button.TextColor3 = Color3.fromRGB(255, 255, 255)
+button.BackgroundTransparency = 0.5
+
+local function toggleInvisible()
+    if _G.a then 
+        for _, b in pairs(_G.a) do 
+            b:Disconnect() 
+        end 
+        _G.a = nil 
+    end
+
+    local c = player
+    local d, e, f, g = c:GetMouse(), c.Character or c.CharacterAdded:Wait(), nil, nil
+    repeat f = e:FindFirstChildOfClass("Humanoid") until f
+    repeat g = e:FindFirstChild("HumanoidRootPart") until g
+
+    local h, i = false, {}
+    for _, j in pairs(e:GetDescendants()) do 
+        if j:IsA("BasePart") and j.Transparency == 0 then 
+            i[#i + 1] = j 
+        end 
+    end
+
+    local k = {nil, nil}
+    k[1] = d.KeyDown:Connect(function(l)
+        if l == "g" then
+            h = not h
+            for _, m in pairs(i) do 
+                m.Transparency = m.Transparency == 0 and 0.5 or 0 
+            end
+        end
+    end)
+
+    k[2] = game:GetService("RunService").Heartbeat:Connect(function()
+        if h then
+            local n, o = g.CFrame, f.CameraOffset
+            local p = n * CFrame.new(0, -1000000, 0)
+            f.CameraOffset, g.CFrame = p:ToObjectSpace(CFrame.new(n.Position)).Position, p
+            game:GetService("RunService").RenderStepped:Wait()
+            f.CameraOffset, g.CFrame = o, n
+        end
+    end)
+
+    _G.a = k
+end
+
+button.MouseButton1Click:Connect(toggleInvisible)
